@@ -1,10 +1,13 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { COST_FIELDS } from "@/lib/types";
 import { formatCurrency, getTotalCost } from "@/lib/metrics";
+import { useToast } from "@/components/Toast";
+import { friendlySaveError } from "@/lib/errors";
+import { primaryBtnClass, sectionCardClass } from "@/lib/ui";
 
 const emptyForm = {
   concert_name: "",
@@ -32,12 +35,21 @@ function toNumber(value: string): number {
   return Number.isFinite(n) ? n : 0;
 }
 
-export function ConcertForm() {
+export function ConcertForm({
+  initialValues,
+  fromDiscover = false,
+}: {
+  initialValues?: Partial<typeof emptyForm>;
+  fromDiscover?: boolean;
+}) {
   const router = useRouter();
-  const [form, setForm] = useState(emptyForm);
+  const { showToast } = useToast();
+  const [form, setForm] = useState(() => ({ ...emptyForm, ...initialValues }));
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState<string | null>(null);
+  const [pulseTotal, setPulseTotal] = useState(false);
+  const [showDiscoverBanner, setShowDiscoverBanner] = useState(fromDiscover);
+  const prevTotal = useRef<number | null>(null);
 
   const totalCost = useMemo(
     () =>
@@ -54,16 +66,25 @@ export function ConcertForm() {
     [form]
   );
 
+  useEffect(() => {
+    if (prevTotal.current !== null && prevTotal.current !== totalCost) {
+      setPulseTotal(true);
+      const t = window.setTimeout(() => setPulseTotal(false), 450);
+      prevTotal.current = totalCost;
+      return () => window.clearTimeout(t);
+    }
+    prevTotal.current = totalCost;
+  }, [totalCost]);
+
   function update(field: keyof typeof emptyForm, value: string) {
     setForm((prev) => ({ ...prev, [field]: value }));
-    setSuccess(null);
+    setError(null);
   }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setSaving(true);
     setError(null);
-    setSuccess(null);
 
     const supabase = createClient();
     const {
@@ -71,7 +92,9 @@ export function ConcertForm() {
     } = await supabase.auth.getUser();
 
     if (!user) {
-      setError("You need to be logged in to save a concert.");
+      const msg = "You need to be logged in to save a concert.";
+      setError(msg);
+      showToast(msg, "error");
       setSaving(false);
       return;
     }
@@ -101,29 +124,52 @@ export function ConcertForm() {
     setSaving(false);
 
     if (insertError) {
-      setError(insertError.message);
+      const msg = friendlySaveError(insertError.message);
+      setError(msg);
+      showToast(msg, "error");
       return;
     }
 
-    setSuccess("Concert saved! Nice work logging another show.");
+    showToast("Concert saved! Nice work logging another show.", "success");
     setForm(emptyForm);
     router.refresh();
   }
 
+  const totalBadge = (
+    <div
+      className={`rounded-box bg-primary/10 px-4 py-2 text-right ${pulseTotal ? "animate-soft-pulse" : ""}`}
+    >
+      <div className="text-xs font-medium uppercase tracking-wide text-primary/80">
+        Total concert cost
+      </div>
+      <div className="text-2xl font-bold text-primary">{formatCurrency(totalCost)}</div>
+    </div>
+  );
+
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
-      {error ? (
-        <div className="alert alert-error">
-          <span>{error}</span>
-        </div>
-      ) : null}
-      {success ? (
-        <div className="alert alert-success">
-          <span>{success}</span>
+    <form onSubmit={handleSubmit} className="space-y-6 pb-24 md:pb-0">
+      {showDiscoverBanner ? (
+        <div className="alert alert-info animate-fade-up py-3">
+          <span>
+            Details filled from Discover — add your costs, hours, and fun rating, then save.
+          </span>
+          <button
+            type="button"
+            className="btn btn-ghost btn-xs"
+            onClick={() => setShowDiscoverBanner(false)}
+          >
+            Dismiss
+          </button>
         </div>
       ) : null}
 
-      <section className="card border border-base-300/70 bg-base-100 shadow-sm">
+      {error ? (
+        <div className="alert alert-error animate-fade-up">
+          <span>{error}</span>
+        </div>
+      ) : null}
+
+      <section className={`${sectionCardClass} animate-fade-up`}>
         <div className="card-body gap-4">
           <div>
             <h2 className="card-title text-lg">Concert details</h2>
@@ -238,7 +284,7 @@ export function ConcertForm() {
         </div>
       </section>
 
-      <section className="card border border-base-300/70 bg-base-100 shadow-sm">
+      <section className={`${sectionCardClass} animate-fade-up stagger-2`}>
         <div className="card-body gap-4">
           <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
             <div>
@@ -247,42 +293,34 @@ export function ConcertForm() {
                 Enter what you spent. Leave blank fields as zero.
               </p>
             </div>
-            <div className="rounded-box bg-primary/10 px-4 py-2 text-right">
-              <div className="text-xs font-medium uppercase tracking-wide text-primary/80">
-                Total concert cost
-              </div>
-              <div className="text-2xl font-bold text-primary">{formatCurrency(totalCost)}</div>
-            </div>
+            <div className="hidden sm:block">{totalBadge}</div>
           </div>
 
           <div className="grid gap-4 sm:grid-cols-2">
             {COST_FIELDS.map((field) => (
-              <div key={field.key} className="form-control w-full">
-                <label htmlFor={field.key} className="label-text mb-1 font-medium">
-                  {field.label}
-                </label>
-                <div className="input input-bordered flex items-center gap-2">
+              <label key={field.key} className="form-control w-full">
+                <span className="label-text mb-1 font-medium">{field.label}</span>
+                <span className="input input-bordered flex items-center gap-2">
                   <span className="opacity-50" aria-hidden>
                     $
                   </span>
                   <input
-                    id={field.key}
                     type="number"
                     min="0"
                     step="0.01"
-                    className="grow"
+                    className="grow bg-transparent outline-none"
                     value={form[field.key]}
                     onChange={(e) => update(field.key, e.target.value)}
                     placeholder="0.00"
                   />
-                </div>
-              </div>
+                </span>
+              </label>
             ))}
           </div>
         </div>
       </section>
 
-      <section className="card border border-base-300/70 bg-base-100 shadow-sm">
+      <section className={`${sectionCardClass} animate-fade-up stagger-3`}>
         <div className="card-body gap-4">
           <div>
             <h2 className="card-title text-lg">Fun rating</h2>
@@ -310,7 +348,9 @@ export function ConcertForm() {
                   <button
                     key={value}
                     type="button"
-                    className={`btn btn-sm h-10 min-h-10 ${selected ? "btn-primary" : "btn-outline"}`}
+                    className={`btn btn-sm h-10 min-h-10 pressable ${
+                      selected ? "btn-primary shadow-md" : "btn-outline"
+                    }`}
                     aria-pressed={selected}
                     onClick={() => update("fun_rating", value)}
                   >
@@ -323,8 +363,8 @@ export function ConcertForm() {
         </div>
       </section>
 
-      <div className="flex flex-wrap gap-3">
-        <button type="submit" className="btn btn-primary" disabled={saving}>
+      <div className="hidden flex-wrap gap-3 md:flex">
+        <button type="submit" className={primaryBtnClass} disabled={saving}>
           {saving ? (
             <>
               <span className="loading loading-spinner loading-sm" />
@@ -336,16 +376,29 @@ export function ConcertForm() {
         </button>
         <button
           type="button"
-          className="btn btn-ghost"
+          className="btn btn-ghost pressable"
           disabled={saving}
           onClick={() => {
             setForm(emptyForm);
             setError(null);
-            setSuccess(null);
           }}
         >
           Clear form
         </button>
+      </div>
+
+      {/* Sticky mobile footer */}
+      <div className="fixed inset-x-0 bottom-[4.25rem] z-30 border-t border-base-300/70 bg-base-100/95 px-4 py-3 backdrop-blur-md md:hidden">
+        <div className="mx-auto flex max-w-lg items-center justify-between gap-3">
+          {totalBadge}
+          <button type="submit" className={`${primaryBtnClass} shrink-0`} disabled={saving}>
+            {saving ? (
+              <span className="loading loading-spinner loading-sm" />
+            ) : (
+              "Save"
+            )}
+          </button>
+        </div>
       </div>
     </form>
   );

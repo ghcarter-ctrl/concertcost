@@ -1,7 +1,11 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { DAISY_THEMES, type DaisyTheme } from "@/lib/types";
+import {
+  DAISY_THEMES,
+  FEATURED_THEMES,
+  type DaisyTheme,
+} from "@/lib/types";
 import { Palette } from "lucide-react";
 
 const STORAGE_KEY = "concert-cost-theme";
@@ -16,7 +20,8 @@ export function ThemeSelector({ className = "" }: { className?: string }) {
 
   useEffect(() => {
     const saved = localStorage.getItem(STORAGE_KEY);
-    const next = saved && DAISY_THEMES.includes(saved as DaisyTheme) ? saved : DEFAULT_THEME;
+    const next =
+      saved && DAISY_THEMES.includes(saved as DaisyTheme) ? saved : DEFAULT_THEME;
     setTheme(next);
     applyTheme(next);
   }, []);
@@ -27,22 +32,39 @@ export function ThemeSelector({ className = "" }: { className?: string }) {
     applyTheme(next);
   }
 
+  const featuredIds = new Set(FEATURED_THEMES.map((t) => t.id));
+  const moreThemes = DAISY_THEMES.filter((t) => !featuredIds.has(t));
+
   return (
     <label className={`flex items-center gap-2 ${className}`}>
       <Palette className="h-4 w-4 opacity-70" aria-hidden />
       <span className="sr-only sm:not-sr-only sm:text-sm sm:opacity-70">Theme</span>
       <select
-        className="select select-bordered select-sm w-full max-w-[11rem]"
+        className="select select-bordered select-sm w-full max-w-[12rem]"
         value={theme}
         onChange={(e) => onChange(e.target.value)}
         aria-label="Choose theme"
       >
-        {DAISY_THEMES.map((t) => (
-          <option key={t} value={t}>
-            {t}
-          </option>
-        ))}
+        <optgroup label="Featured">
+          {FEATURED_THEMES.map((t) => (
+            <option key={t.id} value={t.id}>
+              {t.label}
+            </option>
+          ))}
+        </optgroup>
+        <optgroup label="More themes">
+          {moreThemes.map((t) => (
+            <option key={t} value={t}>
+              {t.charAt(0).toUpperCase() + t.slice(1)}
+            </option>
+          ))}
+        </optgroup>
       </select>
+      <span
+        className="hidden h-4 w-4 shrink-0 rounded-full border border-base-300 bg-primary sm:inline-block"
+        title="Primary color preview"
+        aria-hidden
+      />
     </label>
   );
 }

@@ -31,11 +31,15 @@ export function formatNumber(value: number, digits = 1): string {
 }
 
 export function formatDate(dateStr: string): string {
-  const date = new Date(`${dateStr}T12:00:00`);
+  // Parse YYYY-MM-DD in UTC so server and browser always show the same calendar day.
+  const [year, month, day] = dateStr.split("-").map(Number);
+  if (!year || !month || !day) return dateStr;
+  const date = new Date(Date.UTC(year, month - 1, day, 12));
   return new Intl.DateTimeFormat("en-US", {
     month: "short",
     day: "numeric",
     year: "numeric",
+    timeZone: "UTC",
   }).format(date);
 }
 

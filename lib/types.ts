@@ -81,3 +81,15 @@ export const DAISY_THEMES = [
 ] as const;
 
 export type DaisyTheme = (typeof DAISY_THEMES)[number];
+
+/** Shortlist shown first in the theme picker */
+export const FEATURED_THEMES: { id: DaisyTheme; label: string }[] = [
+  { id: "cupcake", label: "Cupcake" },
+  { id: "light", label: "Light" },
+  { id: "night", label: "Night" },
+  { id: "synthwave", label: "Synthwave" },
+  { id: "emerald", label: "Emerald" },
+  { id: "dracula", label: "Dracula" },
+  { id: "nord", label: "Nord" },
+  { id: "autumn", label: "Autumn" },
+];

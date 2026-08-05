@@ -1,8 +1,15 @@
 import { COST_FIELDS } from "@/lib/types";
 import type { ConcertWithMetrics } from "@/lib/metrics";
 import { formatCurrency, formatDate, formatNumber } from "@/lib/metrics";
+import { staggerClass } from "@/lib/ui";
 
-export function ConcertCard({ concert }: { concert: ConcertWithMetrics }) {
+export function ConcertCard({
+  concert,
+  index = 0,
+}: {
+  concert: ConcertWithMetrics;
+  index?: number;
+}) {
   const mainCosts = COST_FIELDS.map((field) => ({
     label: field.label.replace(" cost", ""),
     amount: Number(concert[field.key]) || 0,
@@ -12,11 +19,13 @@ export function ConcertCard({ concert }: { concert: ConcertWithMetrics }) {
     .slice(0, 4);
 
   return (
-    <article className="card border border-base-300/70 bg-base-100 shadow-sm transition hover:shadow-md">
+    <article
+      className={`card card-lift border border-base-300/70 border-l-4 border-l-primary bg-base-100 shadow-sm ${staggerClass(index)}`}
+    >
       <div className="card-body gap-4">
         <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
           <div>
-            <h3 className="card-title text-xl">{concert.concert_name}</h3>
+            <h3 className="font-display text-xl font-bold leading-tight">{concert.concert_name}</h3>
             <p className="text-base-content/70">{concert.artist}</p>
             <p className="mt-1 text-sm text-base-content/60">
               {concert.venue} · {concert.city}, {concert.state}
@@ -60,8 +69,8 @@ export function ConcertCard({ concert }: { concert: ConcertWithMetrics }) {
         ) : null}
 
         {concert.notes ? (
-          <div className="rounded-box bg-base-200/70 p-3 text-sm text-base-content/80">
-            <span className="font-medium">Notes: </span>
+          <div className="rounded-box bg-base-200/60 p-3 text-sm text-base-content/75">
+            <span className="font-medium text-base-content/90">Notes: </span>
             {concert.notes}
           </div>
         ) : null}

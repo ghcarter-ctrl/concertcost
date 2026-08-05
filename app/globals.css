@@ -15,3 +15,175 @@ body {
 .font-display {
   font-family: var(--font-fraunces), ui-serif, Georgia, serif;
 }
+
+/* Smooth theme color shifts */
+html,
+body,
+.bg-base-100,
+.bg-base-200,
+.card,
+.btn,
+.input,
+.select,
+.textarea,
+.badge,
+.tabs,
+.stat {
+  transition:
+    background-color 220ms ease,
+    color 220ms ease,
+    border-color 220ms ease,
+    box-shadow 220ms ease;
+}
+
+/* Spacing rhythm helpers */
+.section-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+@media (min-width: 640px) {
+  .section-stack {
+    gap: 2rem;
+  }
+}
+
+.page-title {
+  font-family: var(--font-fraunces), ui-serif, Georgia, serif;
+  font-size: 1.75rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  line-height: 1.2;
+}
+
+@media (min-width: 640px) {
+  .page-title {
+    font-size: 2rem;
+  }
+}
+
+.page-subtitle {
+  margin-top: 0.35rem;
+  font-size: 0.95rem;
+  color: color-mix(in oklab, var(--color-base-content) 65%, transparent);
+}
+
+/* Motion primitives */
+@keyframes fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes soft-pulse {
+  0% {
+    transform: scale(1);
+  }
+  40% {
+    transform: scale(1.03);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+.animate-fade-up {
+  animation: fade-up 450ms ease-out both;
+}
+
+.animate-fade-in {
+  animation: fade-in 400ms ease-out both;
+}
+
+.animate-soft-pulse {
+  animation: soft-pulse 420ms ease-out;
+}
+
+.pressable {
+  transition:
+    transform 140ms ease,
+    box-shadow 140ms ease;
+}
+
+.pressable:active {
+  transform: scale(0.97);
+}
+
+.stagger-1 {
+  animation-delay: 40ms;
+}
+.stagger-2 {
+  animation-delay: 80ms;
+}
+.stagger-3 {
+  animation-delay: 120ms;
+}
+.stagger-4 {
+  animation-delay: 160ms;
+}
+.stagger-5 {
+  animation-delay: 200ms;
+}
+.stagger-6 {
+  animation-delay: 240ms;
+}
+.stagger-7 {
+  animation-delay: 280ms;
+}
+.stagger-8 {
+  animation-delay: 320ms;
+}
+
+.card-lift {
+  transition:
+    transform 180ms ease,
+    box-shadow 180ms ease;
+}
+
+.card-lift:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 28px color-mix(in oklab, var(--color-base-content) 10%, transparent);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html,
+  body,
+  .bg-base-100,
+  .bg-base-200,
+  .card,
+  .btn,
+  .input,
+  .select,
+  .textarea,
+  .badge,
+  .tabs,
+  .stat,
+  .pressable,
+  .card-lift {
+    transition: none !important;
+  }
+
+  .animate-fade-up,
+  .animate-fade-in,
+  .animate-soft-pulse,
+  .pressable:active,
+  .card-lift:hover {
+    animation: none !important;
+    transform: none !important;
+  }
+}

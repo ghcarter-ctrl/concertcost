@@ -3,6 +3,7 @@ import type { Concert } from "@/lib/types";
 import { withMetrics } from "@/lib/metrics";
 import { ConcertCard } from "@/components/ConcertCard";
 import { EmptyState } from "@/components/StatCard";
+import { pageSubtitleClass, pageTitleClass } from "@/lib/ui";
 
 export default async function MyConcertsPage() {
   const supabase = await createClient();
@@ -22,10 +23,10 @@ export default async function MyConcertsPage() {
   const concerts = ((data ?? []) as Concert[]).map(withMetrics);
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h2 className="text-2xl font-bold tracking-tight">My Concerts</h2>
-        <p className="text-base-content/65">
+    <div className="section-stack">
+      <div className="animate-fade-in">
+        <h2 className={pageTitleClass}>My Concerts</h2>
+        <p className={pageSubtitleClass}>
           Every show you have logged, with totals and value scores.
         </p>
       </div>
@@ -34,8 +35,8 @@ export default async function MyConcertsPage() {
         <EmptyState />
       ) : (
         <div className="grid gap-4">
-          {concerts.map((concert) => (
-            <ConcertCard key={concert.id} concert={concert} />
+          {concerts.map((concert, index) => (
+            <ConcertCard key={concert.id} concert={concert} index={index} />
           ))}
         </div>
       )}

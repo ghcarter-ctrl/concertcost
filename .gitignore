@@ -2,6 +2,7 @@
 .env
 .env.*
 !.env.example
+!.env.local.example
 
 # Dependencies
 node_modules/
@@ -11,6 +12,7 @@ node_modules/
 out/
 dist/
 build/
+*.tsbuildinfo
 
 # OS / editor
 .DS_Store
