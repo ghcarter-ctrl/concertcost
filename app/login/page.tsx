@@ -37,66 +37,74 @@ function LoginForm() {
     const supabase = createClient();
 
     if (mode === "signup") {
-      const origin = typeof window !== "undefined" ? window.location.origin : "";
-      const controller = new AbortController();
-      const timeoutId = window.setTimeout(() => controller.abort(), 12000);
-
       try {
-        // Prefer a direct fetch-style timeout via Promise.race around signUp.
-        const signUpPromise = supabase.auth.signUp({
-          email,
-          password,
-          options: {
-            emailRedirectTo: origin ? `${origin}/auth/callback` : undefined,
-          },
+        const res = await fetch("/api/auth/signup", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email, password }),
         });
 
-        const { data, error: signUpError } = await Promise.race([
-          signUpPromise,
-          new Promise<never>((_, reject) => {
-            controller.signal.addEventListener("abort", () => {
-              reject(
-                new Error(
-                  "Signup timed out. Supabase email is likely stuck. In Supabase: Authentication → Providers → Email → turn Confirm email OFF, Save, then try again."
-                )
-              );
-            });
-          }),
-        ]);
+        const payload = (await res.json()) as {
+          error?: string;
+          ok?: boolean;
+          hasSession?: boolean;
+          access_token?: string;
+          refresh_token?: string;
+          message?: string;
+        };
 
-        window.clearTimeout(timeoutId);
-
-        if (signUpError) {
-          const msg = friendlyAuthError(signUpError.message);
+        if (!res.ok) {
+          const msg = friendlyAuthError(payload.error ?? "Signup failed.");
           setError(msg);
           showToast(msg, "error");
           setLoading(false);
           return;
         }
 
-        if (data.session) {
+        if (payload.hasSession && payload.access_token && payload.refresh_token) {
+          const { error: sessionError } = await supabase.auth.setSession({
+            access_token: payload.access_token,
+            refresh_token: payload.refresh_token,
+          });
+          if (sessionError) {
+            const msg = friendlyAuthError(sessionError.message);
+            setError(msg);
+            showToast(msg, "error");
+            setLoading(false);
+            return;
+          }
           showToast("Welcome! You’re signed in.", "success");
           router.push("/dashboard");
           router.refresh();
           return;
         }
 
-        // Account created but no session = Confirm email is still ON and waiting on email.
+        // Try logging in anyway — works once Confirm email is off / user is confirmed.
+        const { error: signInError } = await supabase.auth.signInWithPassword({
+          email,
+          password,
+        });
+
+        if (!signInError) {
+          showToast("Welcome! You’re signed in.", "success");
+          router.push("/dashboard");
+          router.refresh();
+          return;
+        }
+
         const successMsg =
-          "Account was created, but no verification email arrived. In Supabase turn Confirm email OFF (Authentication → Providers → Email), then log in with the same email/password.";
+          payload.message ??
+          "Account created. Turn Confirm email OFF in Supabase, then log in with the same email and password.";
         setMessage(successMsg);
         showToast(successMsg, "error");
         setMode("login");
         setLoading(false);
         return;
-      } catch (err) {
-        window.clearTimeout(timeoutId);
-        const msg =
-          err instanceof Error
-            ? err.message
-            : "Signup failed. Please try again.";
-        setError(msg);
-        showToast(msg, "error");
+      } catch {
+        setError(
+          "Signup timed out or failed. In Supabase turn Confirm email OFF, then try Log in."
+        );
+        showToast("Signup failed — try Log in after disabling Confirm email.", "error");
         setLoading(false);
         return;
       }
