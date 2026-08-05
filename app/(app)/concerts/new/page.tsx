@@ -24,7 +24,9 @@ export default async function AddConcertPage({
     concert_date: first(params.concert_date),
     ticket_cost: first(params.ticket_cost),
     ticket_fees: first(params.ticket_fees),
+    parking_cost: first(params.parking_cost),
     distance_from_home: first(params.distance_from_home),
+    notes: first(params.notes),
   };
 
   const hasPrefill = Object.values(initialValues).some((v) => v.trim().length > 0);

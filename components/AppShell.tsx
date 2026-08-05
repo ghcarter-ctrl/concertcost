@@ -10,6 +10,7 @@ import {
   Music2,
   PiggyBank,
   Ticket,
+  Car,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { ThemeSelector } from "@/components/ThemeSelector";
@@ -18,6 +19,7 @@ import { ToastProvider } from "@/components/Toast";
 const NAV = [
   { href: "/dashboard", label: "Dashboard", short: "Home", icon: LayoutDashboard },
   { href: "/tickets", label: "Find Tickets", short: "Tickets", icon: Ticket },
+  { href: "/parking", label: "Find Parking", short: "Park", icon: Car },
   { href: "/concerts/new", label: "Add Concert", short: "Add", icon: PlusCircle },
   { href: "/concerts", label: "My Concerts", short: "Shows", icon: ListMusic },
   { href: "/savings", label: "Concert Savings", short: "Save", icon: PiggyBank },
@@ -26,6 +28,7 @@ const NAV = [
 function isNavActive(pathname: string, href: string) {
   if (href === "/dashboard") return pathname === "/dashboard" || pathname === "/";
   if (href === "/tickets") return pathname.startsWith("/tickets");
+  if (href === "/parking") return pathname.startsWith("/parking");
   if (href === "/concerts/new") return pathname.startsWith("/concerts/new");
   if (href === "/concerts") {
     return pathname === "/concerts" || (pathname.startsWith("/concerts/") && !pathname.startsWith("/concerts/new"));
@@ -53,7 +56,7 @@ export function AppShell({
 
   return (
     <ToastProvider>
-      <div className="min-h-screen bg-base-200 pb-20 md:pb-0">
+      <div className="min-h-screen bg-base-200 pb-28 md:pb-0">
         <div className="pointer-events-none fixed inset-0 -z-10 overflow-hidden">
           <div className="absolute -left-24 top-0 h-72 w-72 rounded-full bg-primary/15 blur-3xl" />
           <div className="absolute -right-16 top-40 h-80 w-80 rounded-full bg-secondary/15 blur-3xl" />
@@ -114,7 +117,7 @@ export function AppShell({
         <main className="mx-auto max-w-6xl px-4 py-5 sm:px-6 sm:py-8">{children}</main>
 
         <nav className="fixed inset-x-0 bottom-0 z-40 border-t border-base-300/70 bg-base-100/95 backdrop-blur-md md:hidden">
-          <div className="mx-auto grid max-w-lg grid-cols-5 gap-0.5 px-1 py-1.5">
+          <div className="mx-auto grid max-w-lg grid-cols-3 gap-1 px-2 py-1.5">
             {NAV.map(({ href, short, icon: Icon }) => {
               const active = isNavActive(pathname, href);
               return (
