@@ -28,33 +28,68 @@ function LoginForm() {
     const supabase = createClient();
 
     if (mode === "signup") {
-      const { data, error: signUpError } = await supabase.auth.signUp({
+      // Time out so the button doesn't spin forever if email confirmation is slow.
+      const signUpPromise = supabase.auth.signUp({
         email,
         password,
+        options: {
+          emailRedirectTo:
+            typeof window !== "undefined"
+              ? `${window.location.origin}/dashboard`
+              : undefined,
+        },
       });
 
-      if (signUpError) {
-        const msg = friendlyAuthError(signUpError.message);
+      const timeoutPromise = new Promise<never>((_, reject) => {
+        setTimeout(
+          () =>
+            reject(
+              new Error(
+                "Signup is taking too long. In Supabase, turn off Confirm email under Authentication → Providers → Email, then try again."
+              )
+            ),
+          15000
+        );
+      });
+
+      try {
+        const { data, error: signUpError } = await Promise.race([
+          signUpPromise,
+          timeoutPromise,
+        ]);
+
+        if (signUpError) {
+          const msg = friendlyAuthError(signUpError.message);
+          setError(msg);
+          showToast(msg, "error");
+          setLoading(false);
+          return;
+        }
+
+        if (data.session) {
+          showToast("Welcome! You’re signed in.", "success");
+          router.push("/dashboard");
+          router.refresh();
+          return;
+        }
+
+        const successMsg =
+          "Account created. If login fails, check your email — or turn off Confirm email in Supabase for instant signup.";
+        setMessage(successMsg);
+        showToast(successMsg, "success");
+        setMode("login");
+        setLoading(false);
+        return;
+      } catch (err) {
+        const msg =
+          err instanceof Error
+            ? err.message
+            : "Signup failed. Please try again.";
         setError(msg);
         showToast(msg, "error");
         setLoading(false);
         return;
       }
-
-      if (data.session) {
-        showToast("Welcome! You’re signed in.", "success");
-        router.push("/dashboard");
-        router.refresh();
-        return;
-      }
-
-      const successMsg =
-        "Account created! Check your email to confirm, then log in.";
-      setMessage(successMsg);
-      showToast(successMsg, "success");
-      setMode("login");
-      setLoading(false);
-      return;
     }
 
     const { error: signInError } = await supabase.auth.signInWithPassword({
