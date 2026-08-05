@@ -19,16 +19,24 @@ function weeksUntil(dateStr: string): number {
 
 export function SavingsGoalForm({
   suggestedAmount,
+  initialValues,
 }: {
   suggestedAmount?: number | null;
+  initialValues?: {
+    concert_name?: string;
+    target_amount?: string;
+    target_date?: string;
+  };
 }) {
   const router = useRouter();
   const { showToast } = useToast();
-  const [concertName, setConcertName] = useState("");
-  const [targetAmount, setTargetAmount] = useState(
-    suggestedAmount && suggestedAmount > 0 ? String(Math.round(suggestedAmount)) : ""
-  );
-  const [targetDate, setTargetDate] = useState("");
+  const [concertName, setConcertName] = useState(initialValues?.concert_name ?? "");
+  const [targetAmount, setTargetAmount] = useState(() => {
+    if (initialValues?.target_amount) return initialValues.target_amount;
+    if (suggestedAmount && suggestedAmount > 0) return String(Math.round(suggestedAmount));
+    return "";
+  });
+  const [targetDate, setTargetDate] = useState(initialValues?.target_date ?? "");
   const [startingSaved, setStartingSaved] = useState("");
   const [notes, setNotes] = useState("");
   const [saving, setSaving] = useState(false);

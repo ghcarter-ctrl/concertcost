@@ -2,13 +2,22 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { LayoutDashboard, PlusCircle, ListMusic, LogOut, Music2, PiggyBank } from "lucide-react";
+import {
+  LayoutDashboard,
+  PlusCircle,
+  ListMusic,
+  LogOut,
+  Music2,
+  PiggyBank,
+  Ticket,
+} from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { ThemeSelector } from "@/components/ThemeSelector";
 import { ToastProvider } from "@/components/Toast";
 
 const NAV = [
   { href: "/dashboard", label: "Dashboard", short: "Home", icon: LayoutDashboard },
+  { href: "/tickets", label: "Find Tickets", short: "Tickets", icon: Ticket },
   { href: "/concerts/new", label: "Add Concert", short: "Add", icon: PlusCircle },
   { href: "/concerts", label: "My Concerts", short: "Shows", icon: ListMusic },
   { href: "/savings", label: "Concert Savings", short: "Save", icon: PiggyBank },
@@ -16,6 +25,7 @@ const NAV = [
 
 function isNavActive(pathname: string, href: string) {
   if (href === "/dashboard") return pathname === "/dashboard" || pathname === "/";
+  if (href === "/tickets") return pathname.startsWith("/tickets");
   if (href === "/concerts/new") return pathname.startsWith("/concerts/new");
   if (href === "/concerts") {
     return pathname === "/concerts" || (pathname.startsWith("/concerts/") && !pathname.startsWith("/concerts/new"));
@@ -104,7 +114,7 @@ export function AppShell({
         <main className="mx-auto max-w-6xl px-4 py-5 sm:px-6 sm:py-8">{children}</main>
 
         <nav className="fixed inset-x-0 bottom-0 z-40 border-t border-base-300/70 bg-base-100/95 backdrop-blur-md md:hidden">
-          <div className="mx-auto grid max-w-lg grid-cols-4 gap-1 px-2 py-1.5">
+          <div className="mx-auto grid max-w-lg grid-cols-5 gap-0.5 px-1 py-1.5">
             {NAV.map(({ href, short, icon: Icon }) => {
               const active = isNavActive(pathname, href);
               return (

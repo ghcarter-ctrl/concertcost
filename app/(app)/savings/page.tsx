@@ -11,7 +11,26 @@ import { pageSubtitleClass, pageTitleClass, sectionCardClass } from "@/lib/ui";
 
 export const dynamic = "force-dynamic";
 
-export default async function ConcertSavingsPage() {
+type SearchParams = Record<string, string | string[] | undefined>;
+
+function first(value: string | string[] | undefined): string {
+  if (Array.isArray(value)) return value[0] ?? "";
+  return value ?? "";
+}
+
+export default async function ConcertSavingsPage({
+  searchParams,
+}: {
+  searchParams: Promise<SearchParams>;
+}) {
+  const params = await searchParams;
+  const prefill = {
+    concert_name: first(params.concert_name),
+    target_amount: first(params.target_amount),
+    target_date: first(params.target_date),
+  };
+  const hasPrefill = Object.values(prefill).some((v) => v.trim().length > 0);
+
   const supabase = await createClient();
 
   const [{ data: goalsData, error: goalsError }, { data: contribData }, { data: concertsData }] =
@@ -74,7 +93,10 @@ export default async function ConcertSavingsPage() {
         </div>
       </div>
 
-      <SavingsGoalForm suggestedAmount={averageConcertCost} />
+      <SavingsGoalForm
+        suggestedAmount={averageConcertCost}
+        initialValues={hasPrefill ? prefill : undefined}
+      />
 
       <section className="space-y-4">
         <h3 className="text-sm font-semibold uppercase tracking-wide text-base-content/55">

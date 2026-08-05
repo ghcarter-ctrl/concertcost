@@ -35,10 +35,14 @@ function toNumber(value: string): number {
   return Number.isFinite(n) ? n : 0;
 }
 
-export function ConcertForm() {
+export function ConcertForm({
+  initialValues,
+}: {
+  initialValues?: Partial<typeof emptyForm>;
+} = {}) {
   const router = useRouter();
   const { showToast } = useToast();
-  const [form, setForm] = useState(emptyForm);
+  const [form, setForm] = useState(() => ({ ...emptyForm, ...initialValues }));
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [pulseTotal, setPulseTotal] = useState(false);
