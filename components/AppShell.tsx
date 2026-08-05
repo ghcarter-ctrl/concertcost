@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { LayoutDashboard, PlusCircle, ListMusic, LogOut, Music2 } from "lucide-react";
+import { LayoutDashboard, PlusCircle, ListMusic, LogOut, Music2, PiggyBank } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { ThemeSelector } from "@/components/ThemeSelector";
 import { ToastProvider } from "@/components/Toast";
@@ -11,6 +11,7 @@ const NAV = [
   { href: "/dashboard", label: "Dashboard", short: "Home", icon: LayoutDashboard },
   { href: "/concerts/new", label: "Add Concert", short: "Add", icon: PlusCircle },
   { href: "/concerts", label: "My Concerts", short: "Shows", icon: ListMusic },
+  { href: "/savings", label: "Concert Savings", short: "Save", icon: PiggyBank },
 ];
 
 function isNavActive(pathname: string, href: string) {
@@ -19,6 +20,7 @@ function isNavActive(pathname: string, href: string) {
   if (href === "/concerts") {
     return pathname === "/concerts" || (pathname.startsWith("/concerts/") && !pathname.startsWith("/concerts/new"));
   }
+  if (href === "/savings") return pathname.startsWith("/savings");
   return pathname === href;
 }
 
