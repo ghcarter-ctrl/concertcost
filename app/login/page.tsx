@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Music2 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
@@ -19,6 +19,15 @@ function LoginForm() {
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const fromVerify = params.get("message");
+    if (fromVerify) {
+      setMessage(fromVerify);
+      setMode("login");
+    }
+  }, []);
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setLoading(true);
@@ -28,15 +37,13 @@ function LoginForm() {
     const supabase = createClient();
 
     if (mode === "signup") {
-      // Time out so the button doesn't spin forever if email confirmation is slow.
+      const origin = typeof window !== "undefined" ? window.location.origin : "";
       const signUpPromise = supabase.auth.signUp({
         email,
         password,
         options: {
-          emailRedirectTo:
-            typeof window !== "undefined"
-              ? `${window.location.origin}/dashboard`
-              : undefined,
+          // After clicking Verify in email, Supabase sends the user here.
+          emailRedirectTo: origin ? `${origin}/auth/callback` : undefined,
         },
       });
 
@@ -45,10 +52,10 @@ function LoginForm() {
           () =>
             reject(
               new Error(
-                "Signup is taking too long. In Supabase, turn off Confirm email under Authentication → Providers → Email, then try again."
+                "Signup is taking too long. Use a real email address, check spam, and wait for the verification email."
               )
             ),
-          15000
+          20000
         );
       });
 
@@ -66,6 +73,7 @@ function LoginForm() {
           return;
         }
 
+        // If Confirm email is off, Supabase returns a session immediately.
         if (data.session) {
           showToast("Welcome! You’re signed in.", "success");
           router.push("/dashboard");
@@ -74,7 +82,7 @@ function LoginForm() {
         }
 
         const successMsg =
-          "Account created. If login fails, check your email — or turn off Confirm email in Supabase for instant signup.";
+          "Account created! Check your email for a verification link. Click Verify (it opens in your browser), then come back and log in.";
         setMessage(successMsg);
         showToast(successMsg, "success");
         setMode("login");
@@ -168,7 +176,7 @@ function LoginForm() {
               <p className="mb-4 text-sm text-base-content/65">
                 {mode === "login"
                   ? "Welcome back — ready to check your concert spending?"
-                  : "Create a free account to start tracking your concerts."}
+                  : "Use a real email address. You’ll get a verification email — click Verify, then log in."}
               </p>
 
               {error ? (

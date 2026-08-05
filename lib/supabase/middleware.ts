@@ -8,7 +8,10 @@ export async function updateSession(request: NextRequest) {
   // Missing env vars should not hang the whole app.
   if (!url || !anonKey) {
     const pathname = request.nextUrl.pathname;
-    if (!pathname.startsWith("/login")) {
+    if (
+      !pathname.startsWith("/login") &&
+      !pathname.startsWith("/auth/")
+    ) {
       const loginUrl = request.nextUrl.clone();
       loginUrl.pathname = "/login";
       return NextResponse.redirect(loginUrl);
@@ -48,12 +51,14 @@ export async function updateSession(request: NextRequest) {
 
   const pathname = request.nextUrl.pathname;
   const isLoginPage = pathname.startsWith("/login");
+  const isAuthCallback =
+    pathname.startsWith("/auth/callback") || pathname.startsWith("/auth/confirm");
   const isPublicAsset =
     pathname.startsWith("/_next") ||
     pathname.startsWith("/favicon") ||
     pathname.includes(".");
 
-  if (!user && !isLoginPage && !isPublicAsset) {
+  if (!user && !isLoginPage && !isAuthCallback && !isPublicAsset) {
     const redirectUrl = request.nextUrl.clone();
     redirectUrl.pathname = "/login";
     return NextResponse.redirect(redirectUrl);
