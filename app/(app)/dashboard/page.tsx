@@ -8,6 +8,7 @@ import {
 } from "@/lib/metrics";
 import { EmptyState, HighlightCard, StatCard } from "@/components/StatCard";
 import { DashboardCharts } from "@/components/DashboardCharts";
+import { SavingsDashboardTeaser } from "@/components/SavingsDashboardTeaser";
 import { pageSubtitleClass, pageTitleClass } from "@/lib/ui";
 
 export default async function DashboardPage() {
@@ -30,7 +31,16 @@ export default async function DashboardPage() {
   const stats = computeDashboardStats(concerts);
 
   if (concerts.length === 0) {
-    return <EmptyState />;
+    return (
+      <div className="section-stack">
+        <div className="animate-fade-in">
+          <h2 className={pageTitleClass}>Dashboard</h2>
+          <p className={pageSubtitleClass}>Your concert spending and which shows were worth it.</p>
+        </div>
+        <SavingsDashboardTeaser />
+        <EmptyState />
+      </div>
+    );
   }
 
   return (
@@ -39,6 +49,8 @@ export default async function DashboardPage() {
         <h2 className={pageTitleClass}>Dashboard</h2>
         <p className={pageSubtitleClass}>Your concert spending and which shows were worth it.</p>
       </div>
+
+      <SavingsDashboardTeaser />
 
       <section className="space-y-3">
         <h3 className="text-sm font-semibold uppercase tracking-wide text-base-content/55">
