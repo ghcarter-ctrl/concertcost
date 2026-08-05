@@ -38,32 +38,33 @@ function LoginForm() {
 
     if (mode === "signup") {
       const origin = typeof window !== "undefined" ? window.location.origin : "";
-      const signUpPromise = supabase.auth.signUp({
-        email,
-        password,
-        options: {
-          // After clicking Verify in email, Supabase sends the user here.
-          emailRedirectTo: origin ? `${origin}/auth/callback` : undefined,
-        },
-      });
-
-      const timeoutPromise = new Promise<never>((_, reject) => {
-        setTimeout(
-          () =>
-            reject(
-              new Error(
-                "Signup is taking too long. Use a real email address, check spam, and wait for the verification email."
-              )
-            ),
-          20000
-        );
-      });
+      const controller = new AbortController();
+      const timeoutId = window.setTimeout(() => controller.abort(), 12000);
 
       try {
+        // Prefer a direct fetch-style timeout via Promise.race around signUp.
+        const signUpPromise = supabase.auth.signUp({
+          email,
+          password,
+          options: {
+            emailRedirectTo: origin ? `${origin}/auth/callback` : undefined,
+          },
+        });
+
         const { data, error: signUpError } = await Promise.race([
           signUpPromise,
-          timeoutPromise,
+          new Promise<never>((_, reject) => {
+            controller.signal.addEventListener("abort", () => {
+              reject(
+                new Error(
+                  "Signup timed out. Supabase email is likely stuck. In Supabase: Authentication → Providers → Email → turn Confirm email OFF, Save, then try again."
+                )
+              );
+            });
+          }),
         ]);
+
+        window.clearTimeout(timeoutId);
 
         if (signUpError) {
           const msg = friendlyAuthError(signUpError.message);
@@ -73,7 +74,6 @@ function LoginForm() {
           return;
         }
 
-        // If Confirm email is off, Supabase returns a session immediately.
         if (data.session) {
           showToast("Welcome! You’re signed in.", "success");
           router.push("/dashboard");
@@ -81,14 +81,16 @@ function LoginForm() {
           return;
         }
 
+        // Account created but no session = Confirm email is still ON and waiting on email.
         const successMsg =
-          "Account created! Check your email for a verification link. Click Verify (it opens in your browser), then come back and log in.";
+          "Account was created, but no verification email arrived. In Supabase turn Confirm email OFF (Authentication → Providers → Email), then log in with the same email/password.";
         setMessage(successMsg);
-        showToast(successMsg, "success");
+        showToast(successMsg, "error");
         setMode("login");
         setLoading(false);
         return;
       } catch (err) {
+        window.clearTimeout(timeoutId);
         const msg =
           err instanceof Error
             ? err.message
@@ -176,7 +178,7 @@ function LoginForm() {
               <p className="mb-4 text-sm text-base-content/65">
                 {mode === "login"
                   ? "Welcome back — ready to check your concert spending?"
-                  : "Use a real email address. You’ll get a verification email — click Verify, then log in."}
+                  : "Create an account with your email and password to start tracking concerts."}
               </p>
 
               {error ? (
