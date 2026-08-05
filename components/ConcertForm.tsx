@@ -35,20 +35,13 @@ function toNumber(value: string): number {
   return Number.isFinite(n) ? n : 0;
 }
 
-export function ConcertForm({
-  initialValues,
-  fromDiscover = false,
-}: {
-  initialValues?: Partial<typeof emptyForm>;
-  fromDiscover?: boolean;
-}) {
+export function ConcertForm() {
   const router = useRouter();
   const { showToast } = useToast();
-  const [form, setForm] = useState(() => ({ ...emptyForm, ...initialValues }));
+  const [form, setForm] = useState(emptyForm);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [pulseTotal, setPulseTotal] = useState(false);
-  const [showDiscoverBanner, setShowDiscoverBanner] = useState(fromDiscover);
   const prevTotal = useRef<number | null>(null);
 
   const totalCost = useMemo(
@@ -148,21 +141,6 @@ export function ConcertForm({
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6 pb-24 md:pb-0">
-      {showDiscoverBanner ? (
-        <div className="alert alert-info animate-fade-up py-3">
-          <span>
-            Details filled from Discover — add your costs, hours, and fun rating, then save.
-          </span>
-          <button
-            type="button"
-            className="btn btn-ghost btn-xs"
-            onClick={() => setShowDiscoverBanner(false)}
-          >
-            Dismiss
-          </button>
-        </div>
-      ) : null}
-
       {error ? (
         <div className="alert alert-error animate-fade-up">
           <span>{error}</span>

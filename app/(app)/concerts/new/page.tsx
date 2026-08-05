@@ -1,32 +1,7 @@
 import { ConcertForm } from "@/components/ConcertForm";
 import { pageSubtitleClass, pageTitleClass } from "@/lib/ui";
 
-type SearchParams = Record<string, string | string[] | undefined>;
-
-function first(value: string | string[] | undefined): string {
-  if (Array.isArray(value)) return value[0] ?? "";
-  return value ?? "";
-}
-
-export default async function AddConcertPage({
-  searchParams,
-}: {
-  searchParams: Promise<SearchParams>;
-}) {
-  const params = await searchParams;
-  const fromDiscover = first(params.from) === "discover";
-
-  const initialValues = {
-    concert_name: first(params.concert_name),
-    artist: first(params.artist),
-    venue: first(params.venue),
-    city: first(params.city),
-    state: first(params.state),
-    concert_date: first(params.concert_date),
-  };
-
-  const hasPrefill = Object.values(initialValues).some((v) => v.trim().length > 0);
-
+export default function AddConcertPage() {
   return (
     <div className="section-stack">
       <div className="animate-fade-in">
@@ -36,10 +11,7 @@ export default async function AddConcertPage({
           type.
         </p>
       </div>
-      <ConcertForm
-        initialValues={hasPrefill ? initialValues : undefined}
-        fromDiscover={fromDiscover && hasPrefill}
-      />
+      <ConcertForm />
     </div>
   );
 }
